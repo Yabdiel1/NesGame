@@ -401,18 +401,77 @@ nmi:
 @loop:	lda hello, x 	; Load the hello message into SPR-RAM
   sta $2004
   inx
-  cpx #$1c
+  cpx #$c8
   bne @loop
   rti
 
 hello:
   .byte $00, $00, $00, $00 	; Why do I need these here?
   .byte $00, $00, $00, $00
-  .byte $6c, $00, $00, $6c
-  .byte $6c, $01, $00, $76
-  .byte $6c, $02, $00, $80
-  .byte $6c, $02, $00, $8A
-  .byte $6c, $03, $00, $94
+
+  ;first set of sprite (down)
+  .byte $0F, $01, $00, $07
+  .byte $0F, $02, $00, $0F
+  .byte $17, $11, $00, $07
+  .byte $17, $12, $00, $0F
+
+  .byte $0F, $21, $00, $1e
+  .byte $0F, $22, $00, $26
+  .byte $17, $31, $00, $1e
+  .byte $17, $32, $00, $26
+
+  .byte $0F, $41, $00, $34
+  .byte $0F, $42, $00, $3c
+  .byte $17, $51, $00, $34 
+  .byte $17, $52, $00, $3c
+
+  ;second set of sprite (up)
+  .byte $23, $03, $00, $07
+  .byte $23, $04, $00, $0f
+  .byte $2b, $13, $00, $07
+  .byte $2b, $14, $00, $0f
+
+  .byte $23, $23, $00, $1e
+  .byte $23, $24, $00, $26
+  .byte $2b, $33, $00, $1e
+  .byte $2b, $34, $00, $26
+
+  .byte $23, $43, $00, $34
+  .byte $23, $44, $00, $3c
+  .byte $2b, $53, $00, $34
+  .byte $2b, $54, $00, $3c
+
+  ;third set of sprite (right)
+  .byte $39, $05, $00, $07
+  .byte $39, $06, $00, $0F
+  .byte $41, $15, $00, $07
+  .byte $41, $16, $00, $0F
+
+  .byte $39, $25, $00, $1e
+  .byte $39, $26, $00, $26
+  .byte $41, $35, $00, $1e
+  .byte $41, $36, $00, $26
+
+  .byte $39, $45, $00, $34
+  .byte $39, $46, $00, $3c
+  .byte $41, $55, $00, $34 
+  .byte $41, $56, $00, $3c
+
+  ;fourth set of sprite (left)
+  .byte $4f, $07, $00, $07
+  .byte $4f, $08, $00, $0F
+  .byte $57, $17, $00, $07
+  .byte $57, $18, $00, $0F
+
+  .byte $4f, $27, $00, $1e
+  .byte $4f, $28, $00, $26
+  .byte $57, $37, $00, $1e
+  .byte $57, $38, $00, $26
+
+  .byte $4f, $47, $00, $34
+  .byte $4f, $48, $00, $3c
+  .byte $57, $57, $00, $34 
+  .byte $57, $58, $00, $3c
 
 palettes:
   ; Background Palette
@@ -422,8 +481,8 @@ palettes:
   .byte $0f, $09, $1a, $2a
 
   ; Sprite Palette
-  .byte $0f, $20, $00, $00
-  .byte $0f, $00, $00, $00
+  .byte $0f, $0B, $2a, $37
+  .byte $0f, $0C, $2C, $37
   .byte $0f, $00, $00, $00
   .byte $0f, $00, $00, $00
 
