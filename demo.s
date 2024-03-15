@@ -340,7 +340,7 @@ backgrounds: ; sets parameters for writeBackground and calls it for each tile we
 
   jmp writeAttributeTables
 
-writeBackground: ; takes a parameter X (high byte), Y(low byte) and index tile to write
+.proc writeBackground ; takes a parameter X (high byte), Y(low byte) and index tile to write
 ; these parameters are saved in $00, $01, and $02 of the ram respectively
   LDA PPUSTATUS
   LDA $00
@@ -350,6 +350,7 @@ writeBackground: ; takes a parameter X (high byte), Y(low byte) and index tile t
   LDX $02
   STX PPUDATA
   rts
+.endproc
 
 writeAttributeTables:
   LDA PPUSTATUS
@@ -398,6 +399,13 @@ forever:
 nmi:
   ldx #$00 	; Set SPR-RAM address to 0
   stx $2003
+  LDA #$00 ; prevent scrolling for now
+  STA OAMADDR
+  LDA #$02
+  STA OAMDMA
+	LDA #$00
+	STA $2005
+	STA $2005 ; prevent scrolling for now
 @loop:	lda hello, x 	; Load the hello message into SPR-RAM
   sta $2004
   inx
