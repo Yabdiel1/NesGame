@@ -1,66 +1,37 @@
 .include "constants.inc"
-.segment "HEADER"
-  ; .byte "NES", $1A      ; iNES header identifier
-  .byte $4E, $45, $53, $1A
-  .byte 2               ; 2x 16KB PRG code
-  .byte 1               ; 1x  8KB CHR data
-  .byte $01, $00        ; mapper 0, vertical mirroring
+.include "header.inc"
 
 .segment "ZEROPAGE"
 background_x: .res 1
 background_y: .res 1
 background_index: .res 1
 
-.segment "VECTORS"
-  ;; When an NMI happens (once per frame if enabled) the label nmi:
-  .addr nmi
-  ;; When the processor first turns on or is reset, it will jump to the label reset:
-  .addr reset
-  ;; External interrupt IRQ (unused)
-  .addr 0
 
-; "nes" linker config requires a STARTUP section, even if it's empty
-.segment "STARTUP"
+
+; ; "nes" linker config requires a STARTUP section, even if it's empty
+; .segment "STARTUP"
 
 ; Main code segment for the program
 .segment "CODE"
+.proc irq_handler
+  RTI
+.endproc
 
-reset:
-  sei		; disable IRQs
-  cld		; disable decimal mode
-  ldx #$40
-  stx $4017	; disable APU frame IRQ
-  ldx #$ff 	; Set up stack
-  txs		;  .
-  inx		; now X = 0
-  stx $2000	; disable NMI
-  stx $2001 	; disable rendering
-  stx $4010 	; disable DMC IRQs
+.proc nmi_handler
+  LDA #$00
+  STA OAMADDR
+  LDA #$02
+  STA OAMDMA
+	LDA #$00
+	STA $2005
+	STA $2005
+  RTI
+.endproc
 
-;; first wait for vblank to make sure PPU is ready
-vblankwait1:
-  bit $2002
-  bpl vblankwait1
+.import reset_handler
 
-clear_memory:
-  lda #$00
-  sta $0000, x
-  sta $0100, x
-  sta $0200, x
-  sta $0300, x
-  sta $0400, x
-  sta $0500, x
-  sta $0600, x
-  sta $0700, x
-  inx
-  bne clear_memory
-
-;; second wait for vblank, PPU is ready after this
-vblankwait2:
-  bit $2002
-  bpl vblankwait2
-
-main:
+.export main
+.proc main
 load_palettes:
   lda $2002
   lda #$3f
@@ -74,6 +45,13 @@ load_palettes:
   inx
   cpx #$20
   bne @loop
+
+LDX #00 ; write sprite data
+load_sprites:	lda hello, X 	; Load the hello message into SPR-RAM
+  sta $0200, X
+  inx
+  cpx #$c0
+  bne load_sprites
 
 backgrounds: ; sets parameters for writeBackground and calls it for each tile we want to write
   ;first 16x16 tile
@@ -152,7 +130,7 @@ backgrounds: ; sets parameters for writeBackground and calls it for each tile we
 
   jmp writeAttributeTables
 
-.proc writeBackground ; takes the parameters Y (high byte), X(low byte) and tile index to write
+writeBackground: ; takes the parameters Y (high byte), X(low byte) and tile index to write
   LDA PPUSTATUS ; draw top left
   LDA background_y
   STA PPUADDR
@@ -191,7 +169,6 @@ backgrounds: ; sets parameters for writeBackground and calls it for each tile we
   ADC #$11
   STA PPUDATA
   rts
-.endproc
 
 writeAttributeTables:
   LDA PPUSTATUS
@@ -226,35 +203,26 @@ writeAttributeTables:
   LDA #%10100000
   STA PPUDATA
 
-enable_rendering:
+vblankwait:
+  BIT PPUSTATUS
+  BPL vblankwait
+
   lda #%10010000	; Enable NMI
   sta PPUCTRL
-  lda #%00011010	; Enable sprites, background, and leftmost 8 bits for the background
+  lda #%00011110	; Enable sprites, background, and leftmost 8 bits for the background
   sta PPUMASK
 
 forever:
   jmp forever
+.endproc
 
-nmi:
-  ldx #$00 	; Set SPR-RAM address to 0
-  stx $2003
-  LDA #$00 ; prevent scrolling for now
-  STA OAMADDR
-  LDA #$02
-  STA OAMDMA
-	LDA #$00
-	STA $2005
-	STA $2005 ; prevent scrolling for now
-@loop:	lda hello, x 	; Load the hello message into SPR-RAM
-  sta $2004
-  inx
-  cpx #$c8
-  bne @loop
-  rti
+.segment "VECTORS"
+.addr nmi_handler, reset_handler, irq_handler
 
+.segment "RODATA"
 hello:
-  .byte $00, $00, $00, $00 	; Why do I need these here?
-  .byte $00, $00, $00, $00
+  ; .byte $00, $00, $00, $00 	; Why do I need these here?
+  ; .byte $00, $00, $00, $00
 
   ;first set of sprite (down)
   .byte $0F, $01, $00, $07
@@ -334,5 +302,5 @@ palettes:
   .byte $0f, $00, $00, $00
 
 ; Character memory
-.segment "CHARS"
+.segment "CHR"
 .incbin "tiles.chr"
