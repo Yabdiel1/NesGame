@@ -6,6 +6,11 @@
   .byte 1               ; 1x  8KB CHR data
   .byte $01, $00        ; mapper 0, vertical mirroring
 
+.segment "ZEROPAGE"
+background_x: .res 1
+background_y: .res 1
+background_index: .res 1
+
 .segment "VECTORS"
   ;; When an NMI happens (once per frame if enabled) the label nmi:
   .addr nmi
@@ -72,283 +77,119 @@ load_palettes:
 
 backgrounds: ; sets parameters for writeBackground and calls it for each tile we want to write
   ;first 16x16 tile
+  CLC
   LDA #$22
-  STA $00
+  STA background_y
   LDA #$44
-  STA $01
+  STA background_x
   LDA #$02
-  STA $02
-  jsr writeBackground
-
-  LDA #$22
-  STA $00
-  LDA #$45
-  STA $01
-  LDA #$03
-  STA $02
-  jsr writeBackground
-
-  LDA #$22
-  STA $00
-  LDA #$64
-  STA $01
-  LDA #$12
-  STA $02
-  jsr writeBackground
-
-  LDA #$22
-  STA $00
-  LDA #$65
-  STA $01
-  LDA #$13
-  STA $02
+  STA background_index
   jsr writeBackground
 
   ;second 16x16 tile
   LDA #$22
-  STA $00
+  STA background_y
   LDA #$46
-  STA $01
+  STA background_x
   LDA #$04
-  STA $02
-  jsr writeBackground
-
-  LDA #$22
-  STA $00
-  LDA #$47
-  STA $01
-  LDA #$05
-  STA $02
-  jsr writeBackground
-
-  LDA #$22
-  STA $00
-  LDA #$66
-  STA $01
-  LDA #$14
-  STA $02
-  jsr writeBackground
-
-  LDA #$22
-  STA $00
-  LDA #$67
-  STA $01
-  LDA #$15
-  STA $02
+  STA background_index
   jsr writeBackground
 
   ; third 16x16 tile
   LDA #$22
-  STA $00
+  STA background_y
   LDA #$48
-  STA $01
+  STA background_x
   LDA #$06
-  STA $02
-  jsr writeBackground
-
-  LDA #$22
-  STA $00
-  LDA #$49
-  STA $01
-  LDA #$07
-  STA $02
-  jsr writeBackground
-
-  LDA #$22
-  STA $00
-  LDA #$68
-  STA $01
-  LDA #$16
-  STA $02
-  jsr writeBackground
-
-  LDA #$22
-  STA $00
-  LDA #$69
-  STA $01
-  LDA #$17
-  STA $02
+  STA background_index
   jsr writeBackground
 
   ; fourth 16x16 tile
   LDA #$22
-  STA $00
+  STA background_y
   LDA #$4a
-  STA $01
+  STA background_x
   LDA #$08
-  STA $02
-  jsr writeBackground
-
-  LDA #$22
-  STA $00
-  LDA #$4b
-  STA $01
-  LDA #$09
-  STA $02
-  jsr writeBackground
-
-  LDA #$22
-  STA $00
-  LDA #$6a
-  STA $01
-  LDA #$18
-  STA $02
-  jsr writeBackground
-
-  LDA #$22
-  STA $00
-  LDA #$6b
-  STA $01
-  LDA #$19
-  STA $02
+  STA background_index
   jsr writeBackground
 
   ;fifth 16x16 tile
   LDA #$22
-  STA $00
+  STA background_y
   LDA #$4c
-  STA $01
+  STA background_x
   LDA #$0a
-  STA $02
-  jsr writeBackground
-
-  LDA #$22
-  STA $00
-  LDA #$4d
-  STA $01
-  LDA #$0b
-  STA $02
-  jsr writeBackground
-
-  LDA #$22
-  STA $00
-  LDA #$6c
-  STA $01
-  LDA #$1a
-  STA $02
-  jsr writeBackground
-
-  LDA #$22
-  STA $00
-  LDA #$6d
-  STA $01
-  LDA #$1b
-  STA $02
+  STA background_index
   jsr writeBackground
 
   ; sixth 16x16 tile
   LDA #$22
-  STA $00
+  STA background_y
   LDA #$4e
-  STA $01
+  STA background_x
   LDA #$0c
-  STA $02
-  jsr writeBackground
-
-  LDA #$22
-  STA $00
-  LDA #$4f
-  STA $01
-  LDA #$0d
-  STA $02
-  jsr writeBackground
-
-  LDA #$22
-  STA $00
-  LDA #$6e
-  STA $01
-  LDA #$1c
-  STA $02
-  jsr writeBackground
-
-  LDA #$22
-  STA $00
-  LDA #$6f
-  STA $01
-  LDA #$1d
-  STA $02
+  STA background_index
   jsr writeBackground
 
   ; seventh 16x16 tile
   LDA #$22
-  STA $00
+  STA background_y
   LDA #$50
-  STA $01
+  STA background_x
   LDA #$0e
-  STA $02
-  jsr writeBackground
-
-  LDA #$22
-  STA $00
-  LDA #$51
-  STA $01
-  LDA #$0f
-  STA $02
-  jsr writeBackground
-
-  LDA #$22
-  STA $00
-  LDA #$70
-  STA $01
-  LDA #$1e
-  STA $02
-  jsr writeBackground
-
-  LDA #$22
-  STA $00
-  LDA #$71
-  STA $01
-  LDA #$1f
-  STA $02
+  STA background_index
   jsr writeBackground
 
   ; eight 16x16 tile
 
   LDA #$22
-  STA $00
+  STA background_y
   LDA #$52
-  STA $01
+  STA background_x
   LDA #$30
-  STA $02
+  STA background_index
   jsr writeBackground
-
-  LDA #$22
-  STA $00
-  LDA #$53
-  STA $01
-  LDA #$31
-  STA $02
-  jsr writeBackground
-
-  LDA #$22
-  STA $00
-  LDA #$72
-  STA $01
-  LDA #$40
-  STA $02
-  jsr writeBackground
-
-  LDA #$22
-  STA $00
-  LDA #$73
-  STA $01
-  LDA #$41
-  STA $02
-  jsr writeBackground
-
-
 
   jmp writeAttributeTables
 
-.proc writeBackground ; takes a parameter X (high byte), Y(low byte) and index tile to write
-; these parameters are saved in $00, $01, and $02 of the ram respectively
-  LDA PPUSTATUS
-  LDA $00
+.proc writeBackground ; takes the parameters Y (high byte), X(low byte) and tile index to write
+  LDA PPUSTATUS ; draw top left
+  LDA background_y
   STA PPUADDR
-  LDA $01
+  LDA background_x
   STA PPUADDR
-  LDX $02
-  STX PPUDATA
+  LDA background_index
+  STA PPUDATA
+
+  LDA PPUSTATUS ; draw top right
+  LDA background_y
+  STA PPUADDR
+  LDA background_x
+  ADC #$01
+  STA PPUADDR
+  LDA background_index
+  ADC #$01
+  STA PPUDATA
+
+  LDA PPUSTATUS ; draw bottom left
+  LDA background_y
+  STA PPUADDR
+  LDA background_x
+  ADC #$20
+  STA PPUADDR
+  LDA background_index
+  ADC #$10
+  STA PPUDATA
+
+  LDA PPUSTATUS ; draw bottom right
+  LDA background_y
+  STA PPUADDR
+  LDA background_x
+  ADC #$21
+  STA PPUADDR
+  LDA background_index
+  ADC #$11
+  STA PPUDATA
   rts
 .endproc
 
@@ -384,8 +225,6 @@ writeAttributeTables:
   STA PPUADDR
   LDA #%10100000
   STA PPUDATA
-
-
 
 enable_rendering:
   lda #%10010000	; Enable NMI
