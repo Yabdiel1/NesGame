@@ -5,6 +5,9 @@
 background_x: .res 1
 background_y: .res 1
 background_index: .res 1
+sprite_x: .res 1
+sprite_y: .res 1
+sprite_index: .res 1
 
 
 
@@ -23,6 +26,9 @@ background_index: .res 1
   LDA #$02
   STA OAMDMA
 	LDA #$00
+
+  jsr sprites
+
 	STA $2005
 	STA $2005
   RTI
@@ -45,13 +51,6 @@ load_palettes:
   inx
   cpx #$20
   bne @loop
-
-LDX #00 ; write sprite data
-load_sprites:	lda hello, X 	; Load the hello message into SPR-RAM
-  sta $0200, X
-  inx
-  cpx #$c0
-  bne load_sprites
 
 backgrounds: ; sets parameters for writeBackground and calls it for each tile we want to write
   ;first 16x16 tile
@@ -203,6 +202,217 @@ writeAttributeTables:
   LDA #%10100000
   STA PPUDATA
 
+; sprites:
+;   ;1st sprite
+;   CLC
+;   LDA #$0F
+;   STA sprite_y
+;   LDA #$07
+;   STA sprite_x
+;   LDA #$01
+;   STA sprite_index
+;   LDX #$00 ; Initialize x-register with the zero value.
+;   jsr writeSprites
+
+;   ;2nd sprite
+;   TXA
+;   ADC #$10
+;   TAX
+;   LDA #$0f
+;   STA sprite_y
+;   LDA #$1e
+;   STA sprite_x
+;   LDA #$21
+;   STA sprite_index
+;   jsr writeSprites
+
+;   ;3rd sprite
+;   TXA
+;   ADC #$10
+;   TAX
+;   LDA #$0f
+;   STA sprite_y
+;   LDA #$34
+;   STA sprite_x
+;   LDA #$41
+;   STA sprite_index
+;   jsr writeSprites
+
+;   ;4th sprite
+;   TXA
+;   ADC #$10
+;   TAX
+;   LDA #$23
+;   STA sprite_y
+;   LDA #$07
+;   STA sprite_x
+;   LDA #$03
+;   STA sprite_index
+;   jsr writeSprites
+
+;   ;5th sprite
+;   TXA
+;   ADC #$10
+;   TAX
+;   LDA #$23
+;   STA sprite_y
+;   LDA #$1e
+;   STA sprite_x
+;   LDA #$23
+;   STA sprite_index
+;   jsr writeSprites
+
+;   ;6th sprite
+;   TXA
+;   ADC #$10
+;   TAX
+;   LDA #$23
+;   STA sprite_y
+;   LDA #$34
+;   STA sprite_x
+;   LDA #$43
+;   STA sprite_index
+;   jsr writeSprites
+
+;   ;7th sprite
+;   TXA
+;   ADC #$10
+;   TAX
+;   LDA #$39
+;   STA sprite_y
+;   LDA #$07
+;   STA sprite_x
+;   LDA #$05
+;   STA sprite_index
+;   jsr writeSprites
+
+;   ;8th sprite
+;   TXA
+;   ADC #$10
+;   TAX
+;   LDA #$39
+;   STA sprite_y
+;   LDA #$1e
+;   STA sprite_x
+;   LDA #$25
+;   STA sprite_index
+;   jsr writeSprites
+
+;   ;9th sprite
+;   TXA
+;   ADC #$10
+;   TAX
+;   LDA #$39
+;   STA sprite_y
+;   LDA #$34
+;   STA sprite_x
+;   LDA #$45
+;   STA sprite_index
+;   jsr writeSprites
+
+;   ;10th sprite
+;   TXA
+;   ADC #$10
+;   TAX
+;   LDA #$4f
+;   STA sprite_y
+;   LDA #$07
+;   STA sprite_x
+;   LDA #$07
+;   STA sprite_index
+;   jsr writeSprites
+
+;   ;11th sprite
+;   TXA
+;   ADC #$10
+;   TAX
+;   LDA #$4f
+;   STA sprite_y
+;   LDA #$1e
+;   STA sprite_x
+;   LDA #$27
+;   STA sprite_index
+;   jsr writeSprites
+
+;   ;12th sprite
+;   TXA
+;   ADC #$10
+;   TAX
+;   LDA #$4f
+;   STA sprite_y
+;   LDA #$34
+;   STA sprite_x
+;   LDA #$47
+;   STA sprite_index
+;   jsr writeSprites
+
+;   jmp vblankwait
+
+; writeSprites: ; takes parameters Y-coordinate, tile-index, attribute, and X-coordinate.
+;   ; save registers
+;   PHP
+;   PHA
+;   TXA
+;   PHA
+;   TYA
+;   PHA
+
+;   ; writing sprites parameters.
+;   LDA PPUSTATUS ; draw top left
+;   LDA sprite_y
+;   STA $0200, x
+;   LDA sprite_x
+;   STA $0203, x
+;   LDA sprite_index
+;   STA $0201, x
+
+;   LDA PPUSTATUS ; draw top right
+;   LDA sprite_y
+;   STA $0204, x
+;   LDA sprite_x
+;   ADC #$08
+;   STA $0207, x
+;   LDA sprite_index
+;   ADC #$01
+;   STA $0205, x
+
+;   LDA PPUSTATUS ; draw bottom left
+;   LDA sprite_y
+;   ADC #$08
+;   STA $0208, x
+;   LDA sprite_x
+;   STA $020B, x
+;   LDA sprite_index
+;   ADC #$10
+;   STA $0209, x
+
+;   LDA PPUSTATUS ; draw bottom right
+;   LDA sprite_y
+;   ADC #$08
+;   STA $020C, x
+;   LDA sprite_x
+;   ADC #$08
+;   STA $020F, x
+;   LDA sprite_index
+;   ADC #$11
+;   STA $020D, x
+
+;   ;write tile attributes for sprites, using palette 0.
+;   LDA #$00
+;   STA $0202, x
+;   STA $0206, x
+;   STA $020A, x
+;   STA $020E, x
+
+;   ; restore registers and return
+;   PLA
+;   TAY
+;   PLA
+;   TAX
+;   PLA
+;   PLP
+;   RTS
+
 vblankwait:
   BIT PPUSTATUS
   BPL vblankwait
@@ -216,77 +426,223 @@ forever:
   jmp forever
 .endproc
 
+.proc sprites
+  ;1st sprite
+  CLC
+  LDA #$0F
+  STA sprite_y
+  LDA #$07
+  STA sprite_x
+  LDA #$01
+  STA sprite_index
+  LDX #$00 ; Initialize x-register with the zero value.
+  jsr writeSprites
+
+  ;2nd sprite
+  TXA
+  ADC #$10
+  TAX
+  LDA #$0f
+  STA sprite_y
+  LDA #$1e
+  STA sprite_x
+  LDA #$21
+  STA sprite_index
+  jsr writeSprites
+
+  ;3rd sprite
+  TXA
+  ADC #$10
+  TAX
+  LDA #$0f
+  STA sprite_y
+  LDA #$34
+  STA sprite_x
+  LDA #$41
+  STA sprite_index
+  jsr writeSprites
+
+  ;4th sprite
+  TXA
+  ADC #$10
+  TAX
+  LDA #$23
+  STA sprite_y
+  LDA #$07
+  STA sprite_x
+  LDA #$03
+  STA sprite_index
+  jsr writeSprites
+
+  ;5th sprite
+  TXA
+  ADC #$10
+  TAX
+  LDA #$23
+  STA sprite_y
+  LDA #$1e
+  STA sprite_x
+  LDA #$23
+  STA sprite_index
+  jsr writeSprites
+
+  ;6th sprite
+  TXA
+  ADC #$10
+  TAX
+  LDA #$23
+  STA sprite_y
+  LDA #$34
+  STA sprite_x
+  LDA #$43
+  STA sprite_index
+  jsr writeSprites
+
+  ;7th sprite
+  TXA
+  ADC #$10
+  TAX
+  LDA #$39
+  STA sprite_y
+  LDA #$07
+  STA sprite_x
+  LDA #$05
+  STA sprite_index
+  jsr writeSprites
+
+  ;8th sprite
+  TXA
+  ADC #$10
+  TAX
+  LDA #$39
+  STA sprite_y
+  LDA #$1e
+  STA sprite_x
+  LDA #$25
+  STA sprite_index
+  jsr writeSprites
+
+  ;9th sprite
+  TXA
+  ADC #$10
+  TAX
+  LDA #$39
+  STA sprite_y
+  LDA #$34
+  STA sprite_x
+  LDA #$45
+  STA sprite_index
+  jsr writeSprites
+
+  ;10th sprite
+  TXA
+  ADC #$10
+  TAX
+  LDA #$4f
+  STA sprite_y
+  LDA #$07
+  STA sprite_x
+  LDA #$07
+  STA sprite_index
+  jsr writeSprites
+
+  ;11th sprite
+  TXA
+  ADC #$10
+  TAX
+  LDA #$4f
+  STA sprite_y
+  LDA #$1e
+  STA sprite_x
+  LDA #$27
+  STA sprite_index
+  jsr writeSprites
+
+  ;12th sprite
+  TXA
+  ADC #$10
+  TAX
+  LDA #$4f
+  STA sprite_y
+  LDA #$34
+  STA sprite_x
+  LDA #$47
+  STA sprite_index
+  jsr writeSprites
+
+  RTS
+.endproc
+
+.proc writeSprites ; takes parameters Y-coordinate, tile-index, attribute, and X-coordinate.
+  ; save registers
+  PHP
+  PHA
+  TXA
+  PHA
+  TYA
+  PHA
+
+  ; writing sprites parameters.
+  LDA PPUSTATUS ; draw top left
+  LDA sprite_y
+  STA $0200, x
+  LDA sprite_x
+  STA $0203, x
+  LDA sprite_index
+  STA $0201, x
+
+  LDA PPUSTATUS ; draw top right
+  LDA sprite_y
+  STA $0204, x
+  LDA sprite_x
+  ADC #$08
+  STA $0207, x
+  LDA sprite_index
+  ADC #$01
+  STA $0205, x
+
+  LDA PPUSTATUS ; draw bottom left
+  LDA sprite_y
+  ADC #$08
+  STA $0208, x
+  LDA sprite_x
+  STA $020B, x
+  LDA sprite_index
+  ADC #$10
+  STA $0209, x
+
+  LDA PPUSTATUS ; draw bottom right
+  LDA sprite_y
+  ADC #$08
+  STA $020C, x
+  LDA sprite_x
+  ADC #$08
+  STA $020F, x
+  LDA sprite_index
+  ADC #$11
+  STA $020D, x
+
+  ;write tile attributes for sprites, using palette 0.
+  LDA #$00
+  STA $0202, x
+  STA $0206, x
+  STA $020A, x
+  STA $020E, x
+
+  ; restore registers and return
+  PLA
+  TAY
+  PLA
+  TAX
+  PLA
+  PLP
+  RTS
+.endproc
+
 .segment "VECTORS"
 .addr nmi_handler, reset_handler, irq_handler
 
 .segment "RODATA"
-hello:
-  ; .byte $00, $00, $00, $00 	; Why do I need these here?
-  ; .byte $00, $00, $00, $00
-
-  ;first set of sprite (down)
-  .byte $0F, $01, $00, $07
-  .byte $0F, $02, $00, $0F
-  .byte $17, $11, $00, $07
-  .byte $17, $12, $00, $0F
-
-  .byte $0F, $21, $00, $1e
-  .byte $0F, $22, $00, $26
-  .byte $17, $31, $00, $1e
-  .byte $17, $32, $00, $26
-
-  .byte $0F, $41, $00, $34
-  .byte $0F, $42, $00, $3c
-  .byte $17, $51, $00, $34 
-  .byte $17, $52, $00, $3c
-
-  ;second set of sprite (up)
-  .byte $23, $03, $00, $07
-  .byte $23, $04, $00, $0f
-  .byte $2b, $13, $00, $07
-  .byte $2b, $14, $00, $0f
-
-  .byte $23, $23, $00, $1e
-  .byte $23, $24, $00, $26
-  .byte $2b, $33, $00, $1e
-  .byte $2b, $34, $00, $26
-
-  .byte $23, $43, $00, $34
-  .byte $23, $44, $00, $3c
-  .byte $2b, $53, $00, $34
-  .byte $2b, $54, $00, $3c
-
-  ;third set of sprite (right)
-  .byte $39, $05, $00, $07
-  .byte $39, $06, $00, $0F
-  .byte $41, $15, $00, $07
-  .byte $41, $16, $00, $0F
-
-  .byte $39, $25, $00, $1e
-  .byte $39, $26, $00, $26
-  .byte $41, $35, $00, $1e
-  .byte $41, $36, $00, $26
-
-  .byte $39, $45, $00, $34
-  .byte $39, $46, $00, $3c
-  .byte $41, $55, $00, $34 
-  .byte $41, $56, $00, $3c
-
-  ;fourth set of sprite (left)
-  .byte $4f, $07, $00, $07
-  .byte $4f, $08, $00, $0F
-  .byte $57, $17, $00, $07
-  .byte $57, $18, $00, $0F
-
-  .byte $4f, $27, $00, $1e
-  .byte $4f, $28, $00, $26
-  .byte $57, $37, $00, $1e
-  .byte $57, $38, $00, $26
-
-  .byte $4f, $47, $00, $34
-  .byte $4f, $48, $00, $3c
-  .byte $57, $57, $00, $34 
-  .byte $57, $58, $00, $3c
 
 palettes:
   ; Background Palette
