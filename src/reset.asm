@@ -33,7 +33,7 @@ clear_oam:
 	BNE clear_oam
 
   ; initialize zero-page values
-  LDA #$00
+  LDA #$20
   STA walk_state
   LDA #$00
   STA walk_count

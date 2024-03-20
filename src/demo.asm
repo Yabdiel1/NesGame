@@ -10,7 +10,8 @@ sprite_y: .res 1
 sprite_index: .res 1
 walk_state: .res 1
 walk_count: .res 1 ; slows down nmi
-.exportzp walk_state, walk_count
+prev_state: .res 1
+.exportzp walk_state, walk_count, prev_state
 
 ; Main code segment for the program
 .segment "CODE"
@@ -279,7 +280,7 @@ forever:
   RTS
 .endproc
 
-.proc updateWalkState ; TODO(yabdiel): update to correct sequence of FSM
+.proc updateWalkState
   PHP ; save registers
   PHA
   TXA
@@ -287,28 +288,52 @@ forever:
   TYA
   PHA
 
-  lda walk_count
+  lda walk_count ; Load walk count value
   cmp #$0a ; update sprite every 10 frames
-  bne next ; if we haven't hit a 10th frame, do not update walk_state
-  CLC ; do not know where the carry flag is being set; but it is being set nonetheless, and we don't want to add $21
-  lda walk_state 
-  ADC #$20 ; update walk_state now that we have hit the 10th frame
-  sta walk_state
-  lda #$00 ; reset walk_count to count up to 10 again
-  sta walk_count
+  bne skip ; If we haven't hit a 10th frame, do not update walk_state
+  lda walk_state ; Load `walk_state` value
+  cmp #$20 ; If walk_state == 20, call reset_zero
+  beq reset_zero ; reset to zero and set previous to 20
+  cmp #$40 ; If walk_state == 40, call reset_zero
+  beq reset_zero ; reset to zero and set previous to 40
+  cmp #$00 ; If walk_state == 0, call update_walk function
+  beq update_walk ; This function assigns to walk_state the value 20 or 40 depending in the previous state
 
-  next: ; could be given a better name
-  lda walk_state
-  cmp #$60 ; adding tile index (walk_state) by 20 each time; there is nothing at an offset of $60, so we want to reset it back to 0
-  bne skip ; do not reset if we have not hit 60
-  lda #$00
-  sta walk_state
+update_walk: ; Update (when `walk_state` equals zero) the `walk_state` depending on the `prev_state`
+  lda prev_state ; Load previous state
+  cmp #$20 ; Check if previous state equals to 20, if so call function `set_to_40`
+  beq set_to_40
+  cmp #$40 ; Check if previous state equals to 40, if so call function `set_to_20`
+  beq set_to_20
 
-  skip: ; could be given a better name
-  lda walk_count 
-  adc #$01 ; increment walk_count to count up to 10
-  sta walk_count
+reset_zero: ; Save current `walk_state` to `prev_state` and reset the `walk_state` to zero
+  lda walk_state ; Load walk state value
+  sta prev_state ; Save walk state value to previous state
+  lda #$00 ; Load zero
+  sta walk_state ; Save zero value to walk state
+  jmp reset_walk_count ; Jump to `reset_walk_count`
+
+reset_walk_count:
+  lda #$00 ; Load zero
+  sta walk_count ; reset walk count to zero
+  jmp end_update ; Jump to `end_update`
   
+set_to_40: ; Set the walk state value to `40`
+  lda #$40 ; Load the value `40`
+  sta walk_state ; Saving the value `40` to walk state
+  jmp reset_walk_count ; Jump to `reset_walk_count`
+
+set_to_20: ; Set the walk state value to `20`
+  lda #$20 ; Load the value `20`
+  sta walk_state ; Saving the value `20` to walk state
+  jmp reset_walk_count ; Jump to `reset_walk_count`
+
+skip: ; Skip walk count to be able to reach to the value `10`
+  lda walk_count ; Load walk count
+  adc #$01 ; increment walk_count to count up to 10
+  sta walk_count ; Save the incremented number to walk_count
+
+end_update: ; end of program
    ; restore registers and return
   PLA
   TAY
