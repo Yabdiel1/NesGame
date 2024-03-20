@@ -1,5 +1,8 @@
 .include "constants.inc"
 
+.segment "ZEROPAGE"
+.importzp walk_state, walk_count
+
 .segment "CODE"
 .import main
 .export reset_handler
@@ -28,6 +31,12 @@ clear_oam:
 	INX
 	INX
 	BNE clear_oam
+
+  ; initialize zero-page values
+  LDA #$00
+  STA walk_state
+  LDA #$00
+  STA walk_count
 
 vblankwait2:
   BIT $2002

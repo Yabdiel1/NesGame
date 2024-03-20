@@ -8,11 +8,9 @@ background_index: .res 1
 sprite_x: .res 1
 sprite_y: .res 1
 sprite_index: .res 1
-
-
-
-; ; "nes" linker config requires a STARTUP section, even if it's empty
-; .segment "STARTUP"
+walk_state: .res 1
+walk_count: .res 1 ; slows down nmi
+.exportzp walk_state, walk_count
 
 ; Main code segment for the program
 .segment "CODE"
@@ -27,6 +25,7 @@ sprite_index: .res 1
   STA OAMDMA
 	LDA #$00
 
+  jsr updateWalkState
   jsr sprites
 
 	STA $2005
@@ -202,217 +201,6 @@ writeAttributeTables:
   LDA #%10100000
   STA PPUDATA
 
-; sprites:
-;   ;1st sprite
-;   CLC
-;   LDA #$0F
-;   STA sprite_y
-;   LDA #$07
-;   STA sprite_x
-;   LDA #$01
-;   STA sprite_index
-;   LDX #$00 ; Initialize x-register with the zero value.
-;   jsr writeSprites
-
-;   ;2nd sprite
-;   TXA
-;   ADC #$10
-;   TAX
-;   LDA #$0f
-;   STA sprite_y
-;   LDA #$1e
-;   STA sprite_x
-;   LDA #$21
-;   STA sprite_index
-;   jsr writeSprites
-
-;   ;3rd sprite
-;   TXA
-;   ADC #$10
-;   TAX
-;   LDA #$0f
-;   STA sprite_y
-;   LDA #$34
-;   STA sprite_x
-;   LDA #$41
-;   STA sprite_index
-;   jsr writeSprites
-
-;   ;4th sprite
-;   TXA
-;   ADC #$10
-;   TAX
-;   LDA #$23
-;   STA sprite_y
-;   LDA #$07
-;   STA sprite_x
-;   LDA #$03
-;   STA sprite_index
-;   jsr writeSprites
-
-;   ;5th sprite
-;   TXA
-;   ADC #$10
-;   TAX
-;   LDA #$23
-;   STA sprite_y
-;   LDA #$1e
-;   STA sprite_x
-;   LDA #$23
-;   STA sprite_index
-;   jsr writeSprites
-
-;   ;6th sprite
-;   TXA
-;   ADC #$10
-;   TAX
-;   LDA #$23
-;   STA sprite_y
-;   LDA #$34
-;   STA sprite_x
-;   LDA #$43
-;   STA sprite_index
-;   jsr writeSprites
-
-;   ;7th sprite
-;   TXA
-;   ADC #$10
-;   TAX
-;   LDA #$39
-;   STA sprite_y
-;   LDA #$07
-;   STA sprite_x
-;   LDA #$05
-;   STA sprite_index
-;   jsr writeSprites
-
-;   ;8th sprite
-;   TXA
-;   ADC #$10
-;   TAX
-;   LDA #$39
-;   STA sprite_y
-;   LDA #$1e
-;   STA sprite_x
-;   LDA #$25
-;   STA sprite_index
-;   jsr writeSprites
-
-;   ;9th sprite
-;   TXA
-;   ADC #$10
-;   TAX
-;   LDA #$39
-;   STA sprite_y
-;   LDA #$34
-;   STA sprite_x
-;   LDA #$45
-;   STA sprite_index
-;   jsr writeSprites
-
-;   ;10th sprite
-;   TXA
-;   ADC #$10
-;   TAX
-;   LDA #$4f
-;   STA sprite_y
-;   LDA #$07
-;   STA sprite_x
-;   LDA #$07
-;   STA sprite_index
-;   jsr writeSprites
-
-;   ;11th sprite
-;   TXA
-;   ADC #$10
-;   TAX
-;   LDA #$4f
-;   STA sprite_y
-;   LDA #$1e
-;   STA sprite_x
-;   LDA #$27
-;   STA sprite_index
-;   jsr writeSprites
-
-;   ;12th sprite
-;   TXA
-;   ADC #$10
-;   TAX
-;   LDA #$4f
-;   STA sprite_y
-;   LDA #$34
-;   STA sprite_x
-;   LDA #$47
-;   STA sprite_index
-;   jsr writeSprites
-
-;   jmp vblankwait
-
-; writeSprites: ; takes parameters Y-coordinate, tile-index, attribute, and X-coordinate.
-;   ; save registers
-;   PHP
-;   PHA
-;   TXA
-;   PHA
-;   TYA
-;   PHA
-
-;   ; writing sprites parameters.
-;   LDA PPUSTATUS ; draw top left
-;   LDA sprite_y
-;   STA $0200, x
-;   LDA sprite_x
-;   STA $0203, x
-;   LDA sprite_index
-;   STA $0201, x
-
-;   LDA PPUSTATUS ; draw top right
-;   LDA sprite_y
-;   STA $0204, x
-;   LDA sprite_x
-;   ADC #$08
-;   STA $0207, x
-;   LDA sprite_index
-;   ADC #$01
-;   STA $0205, x
-
-;   LDA PPUSTATUS ; draw bottom left
-;   LDA sprite_y
-;   ADC #$08
-;   STA $0208, x
-;   LDA sprite_x
-;   STA $020B, x
-;   LDA sprite_index
-;   ADC #$10
-;   STA $0209, x
-
-;   LDA PPUSTATUS ; draw bottom right
-;   LDA sprite_y
-;   ADC #$08
-;   STA $020C, x
-;   LDA sprite_x
-;   ADC #$08
-;   STA $020F, x
-;   LDA sprite_index
-;   ADC #$11
-;   STA $020D, x
-
-;   ;write tile attributes for sprites, using palette 0.
-;   LDA #$00
-;   STA $0202, x
-;   STA $0206, x
-;   STA $020A, x
-;   STA $020E, x
-
-;   ; restore registers and return
-;   PLA
-;   TAY
-;   PLA
-;   TAX
-;   PLA
-;   PLP
-;   RTS
-
 vblankwait:
   BIT PPUSTATUS
   BPL vblankwait
@@ -426,150 +214,108 @@ forever:
   jmp forever
 .endproc
 
-.proc sprites
-  ;1st sprite
+.proc sprites 
+  PHP ; save registers
+  PHA
+  TXA
+  PHA
+  TYA
+  PHA
+
+  LDX #$00 ; Initialize x-register with the zero value. Allows writes to further bytes of the OAM.
+  ; going south sprite
   CLC
-  LDA #$0F
+  LDA #$21
   STA sprite_y
-  LDA #$07
+  LDA #$6a
   STA sprite_x
   LDA #$01
   STA sprite_index
-  LDX #$00 ; Initialize x-register with the zero value.
   jsr writeSprites
 
-  ;2nd sprite
+  ; going north sprite
   TXA
   ADC #$10
   TAX
-  LDA #$0f
-  STA sprite_y
-  LDA #$1e
-  STA sprite_x
   LDA #$21
-  STA sprite_index
-  jsr writeSprites
-
-  ;3rd sprite
-  TXA
-  ADC #$10
-  TAX
-  LDA #$0f
   STA sprite_y
-  LDA #$34
-  STA sprite_x
-  LDA #$41
-  STA sprite_index
-  jsr writeSprites
-
-  ;4th sprite
-  TXA
-  ADC #$10
-  TAX
-  LDA #$23
-  STA sprite_y
-  LDA #$07
+  LDA #$79
   STA sprite_x
   LDA #$03
   STA sprite_index
   jsr writeSprites
 
-  ;5th sprite
+  ; going east sprite
   TXA
   ADC #$10
   TAX
-  LDA #$23
-  STA sprite_y
-  LDA #$1e
-  STA sprite_x
-  LDA #$23
-  STA sprite_index
-  jsr writeSprites
-
-  ;6th sprite
-  TXA
-  ADC #$10
-  TAX
-  LDA #$23
-  STA sprite_y
   LDA #$34
-  STA sprite_x
-  LDA #$43
-  STA sprite_index
-  jsr writeSprites
-
-  ;7th sprite
-  TXA
-  ADC #$10
-  TAX
-  LDA #$39
   STA sprite_y
-  LDA #$07
+  LDA #$6a
   STA sprite_x
   LDA #$05
   STA sprite_index
   jsr writeSprites
 
-  ;8th sprite
+  ; going west sprite
   TXA
   ADC #$10
   TAX
-  LDA #$39
-  STA sprite_y
-  LDA #$1e
-  STA sprite_x
-  LDA #$25
-  STA sprite_index
-  jsr writeSprites
-
-  ;9th sprite
-  TXA
-  ADC #$10
-  TAX
-  LDA #$39
-  STA sprite_y
   LDA #$34
-  STA sprite_x
-  LDA #$45
-  STA sprite_index
-  jsr writeSprites
-
-  ;10th sprite
-  TXA
-  ADC #$10
-  TAX
-  LDA #$4f
   STA sprite_y
-  LDA #$07
+  LDA #$79
   STA sprite_x
   LDA #$07
   STA sprite_index
   jsr writeSprites
 
-  ;11th sprite
-  TXA
-  ADC #$10
+    ; restore registers and return
+  PLA
+  TAY
+  PLA
   TAX
-  LDA #$4f
-  STA sprite_y
-  LDA #$1e
-  STA sprite_x
-  LDA #$27
-  STA sprite_index
-  jsr writeSprites
+  PLA
+  PLP
+  RTS
+.endproc
 
-  ;12th sprite
+.proc updateWalkState ; TODO(yabdiel): update to correct sequence of FSM
+  PHP ; save registers
+  PHA
   TXA
-  ADC #$10
-  TAX
-  LDA #$4f
-  STA sprite_y
-  LDA #$34
-  STA sprite_x
-  LDA #$47
-  STA sprite_index
-  jsr writeSprites
+  PHA
+  TYA
+  PHA
 
+  lda walk_count
+  cmp #$0a ; update sprite every 10 frames
+  bne next ; if we haven't hit a 10th frame, do not update walk_state
+  CLC ; do not know where the carry flag is being set; but it is being set nonetheless, and we don't want to add $21
+  lda walk_state 
+  ADC #$20 ; update walk_state now that we have hit the 10th frame
+  sta walk_state
+  lda #$00 ; reset walk_count to count up to 10 again
+  sta walk_count
+
+  next: ; could be given a better name
+  lda walk_state
+  cmp #$60 ; adding tile index (walk_state) by 20 each time; there is nothing at an offset of $60, so we want to reset it back to 0
+  bne skip ; do not reset if we have not hit 60
+  lda #$00
+  sta walk_state
+
+  skip: ; could be given a better name
+  lda walk_count 
+  adc #$01 ; increment walk_count to count up to 10
+  sta walk_count
+  
+   ; restore registers and return
+  PLA
+  TAY
+  PLA
+  TAX
+  PLA
+  PLP
   RTS
 .endproc
 
@@ -589,6 +335,7 @@ forever:
   LDA sprite_x
   STA $0203, x
   LDA sprite_index
+  ADC walk_state ; walk_state also corresponds to tile offset
   STA $0201, x
 
   LDA PPUSTATUS ; draw top right
@@ -599,6 +346,7 @@ forever:
   STA $0207, x
   LDA sprite_index
   ADC #$01
+  ADC walk_state
   STA $0205, x
 
   LDA PPUSTATUS ; draw bottom left
@@ -609,6 +357,7 @@ forever:
   STA $020B, x
   LDA sprite_index
   ADC #$10
+  ADC walk_state
   STA $0209, x
 
   LDA PPUSTATUS ; draw bottom right
@@ -620,6 +369,7 @@ forever:
   STA $020F, x
   LDA sprite_index
   ADC #$11
+  ADC walk_state
   STA $020D, x
 
   ;write tile attributes for sprites, using palette 0.
