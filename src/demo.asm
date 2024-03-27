@@ -2,22 +2,25 @@
 .include "header.inc"
 
 .segment "ZEROPAGE"
-background_x: .res 1
-background_y: .res 1
-background_index: .res 1
-sprite_x: .res 1
-sprite_y: .res 1
-sprite_index: .res 1
+player_x: .res 1
+player_y: .res 1
+player_sprite_index: .res 1
+player_dir: .res 1
+scroll: .res 1
+ppuctrl_settings: .res 1
+pad1: .res 1
 walk_state: .res 1
 walk_count: .res 1 ; slows down nmi
 prev_state: .res 1
-.exportzp walk_state, walk_count, prev_state
+.exportzp walk_state, walk_count, prev_state, player_x, player_y, player_sprite_index, pad1
 
 ; Main code segment for the program
 .segment "CODE"
 .proc irq_handler
   RTI
 .endproc
+
+.import read_controller1
 
 .proc nmi_handler
   LDA #$00
@@ -26,8 +29,11 @@ prev_state: .res 1
   STA OAMDMA
 	LDA #$00
 
+  ; read controller
+  JSR read_controller1
+
   jsr updateWalkState
-  jsr sprites
+  jsr writeSprites
 
 	STA $2005
 	STA $2005
@@ -52,156 +58,6 @@ load_palettes:
   cpx #$20
   bne @loop
 
-backgrounds: ; sets parameters for writeBackground and calls it for each tile we want to write
-  ;first 16x16 tile
-  CLC
-  LDA #$22
-  STA background_y
-  LDA #$44
-  STA background_x
-  LDA #$02
-  STA background_index
-  jsr writeBackground
-
-  ;second 16x16 tile
-  LDA #$22
-  STA background_y
-  LDA #$46
-  STA background_x
-  LDA #$04
-  STA background_index
-  jsr writeBackground
-
-  ; third 16x16 tile
-  LDA #$22
-  STA background_y
-  LDA #$48
-  STA background_x
-  LDA #$06
-  STA background_index
-  jsr writeBackground
-
-  ; fourth 16x16 tile
-  LDA #$22
-  STA background_y
-  LDA #$4a
-  STA background_x
-  LDA #$08
-  STA background_index
-  jsr writeBackground
-
-  ;fifth 16x16 tile
-  LDA #$22
-  STA background_y
-  LDA #$4c
-  STA background_x
-  LDA #$0a
-  STA background_index
-  jsr writeBackground
-
-  ; sixth 16x16 tile
-  LDA #$22
-  STA background_y
-  LDA #$4e
-  STA background_x
-  LDA #$0c
-  STA background_index
-  jsr writeBackground
-
-  ; seventh 16x16 tile
-  LDA #$22
-  STA background_y
-  LDA #$50
-  STA background_x
-  LDA #$0e
-  STA background_index
-  jsr writeBackground
-
-  ; eight 16x16 tile
-
-  LDA #$22
-  STA background_y
-  LDA #$52
-  STA background_x
-  LDA #$30
-  STA background_index
-  jsr writeBackground
-
-  jmp writeAttributeTables
-
-writeBackground: ; takes the parameters Y (high byte), X(low byte) and tile index to write
-  LDA PPUSTATUS ; draw top left
-  LDA background_y
-  STA PPUADDR
-  LDA background_x
-  STA PPUADDR
-  LDA background_index
-  STA PPUDATA
-
-  LDA PPUSTATUS ; draw top right
-  LDA background_y
-  STA PPUADDR
-  LDA background_x
-  ADC #$01
-  STA PPUADDR
-  LDA background_index
-  ADC #$01
-  STA PPUDATA
-
-  LDA PPUSTATUS ; draw bottom left
-  LDA background_y
-  STA PPUADDR
-  LDA background_x
-  ADC #$20
-  STA PPUADDR
-  LDA background_index
-  ADC #$10
-  STA PPUDATA
-
-  LDA PPUSTATUS ; draw bottom right
-  LDA background_y
-  STA PPUADDR
-  LDA background_x
-  ADC #$21
-  STA PPUADDR
-  LDA background_index
-  ADC #$11
-  STA PPUDATA
-  rts
-
-writeAttributeTables:
-  LDA PPUSTATUS
-  LDA #$23
-  STA PPUADDR
-  LDA #$e1
-  STA PPUADDR
-  LDA #%00000000
-  STA PPUDATA
-
-  LDA PPUSTATUS
-  LDA #$23
-  STA PPUADDR
-  LDA #$e2
-  STA PPUADDR
-  LDA #%10010000
-  STA PPUDATA
-
-  LDA PPUSTATUS
-  LDA #$23
-  STA PPUADDR
-  LDA #$e3
-  STA PPUADDR
-  LDA #%01110000
-  STA PPUDATA
-
-  LDA PPUSTATUS
-  LDA #$23
-  STA PPUADDR
-  LDA #$e4
-  STA PPUADDR
-  LDA #%10100000
-  STA PPUDATA
-
 vblankwait:
   BIT PPUSTATUS
   BPL vblankwait
@@ -213,71 +69,6 @@ vblankwait:
 
 forever:
   jmp forever
-.endproc
-
-.proc sprites 
-  PHP ; save registers
-  PHA
-  TXA
-  PHA
-  TYA
-  PHA
-
-  LDX #$00 ; Initialize x-register with the zero value. Allows writes to further bytes of the OAM.
-  ; going south sprite
-  CLC
-  LDA #$21
-  STA sprite_y
-  LDA #$6a
-  STA sprite_x
-  LDA #$01
-  STA sprite_index
-  jsr writeSprites
-
-  ; going north sprite
-  TXA
-  ADC #$10
-  TAX
-  LDA #$21
-  STA sprite_y
-  LDA #$79
-  STA sprite_x
-  LDA #$03
-  STA sprite_index
-  jsr writeSprites
-
-  ; going east sprite
-  TXA
-  ADC #$10
-  TAX
-  LDA #$34
-  STA sprite_y
-  LDA #$6a
-  STA sprite_x
-  LDA #$05
-  STA sprite_index
-  jsr writeSprites
-
-  ; going west sprite
-  TXA
-  ADC #$10
-  TAX
-  LDA #$34
-  STA sprite_y
-  LDA #$79
-  STA sprite_x
-  LDA #$07
-  STA sprite_index
-  jsr writeSprites
-
-    ; restore registers and return
-  PLA
-  TAY
-  PLA
-  TAX
-  PLA
-  PLP
-  RTS
 .endproc
 
 .proc updateWalkState
@@ -334,9 +125,55 @@ skip: ; Skip walk count to be able to reach to the value `10`
   sta walk_count ; Save the incremented number to walk_count
 
 end_update: ; end of program
+  jsr update_player
    ; restore registers and return
   PLA
   TAY
+  PLA
+  TAX
+  PLA
+  PLP
+  RTS
+.endproc
+
+.proc update_player
+  PHP  ; Start by saving registers,
+  PHA  ; as usual.
+  TXA
+  PHA
+  TYA
+  PHA
+
+  LDA pad1        ; Load button presses
+  AND #BTN_LEFT   ; Filter out all but Left
+  BEQ check_right ; If result is zero, left not pressed
+  DEC player_x  ; If the branch is not taken, move player left
+  LDA #$06 ; player_dir like walk_state also works as a tile offset
+  STA player_dir ; going left
+check_right:
+  LDA pad1
+  AND #BTN_RIGHT
+  BEQ check_up
+  INC player_x
+  LDA #$04
+  STA player_dir ; going right
+check_up:
+  LDA pad1
+  AND #BTN_UP
+  BEQ check_down
+  DEC player_y
+  LDA #$02
+  STA player_dir ; going up
+check_down:
+  LDA pad1
+  AND #BTN_DOWN
+  BEQ done_checking
+  INC player_y ; 
+  LDA #$00
+  STA player_dir ; going down
+done_checking:
+  PLA ; Done with updates, restore registers
+  TAY ; and return to where we called this
   PLA
   TAX
   PLA
@@ -354,55 +191,60 @@ end_update: ; end of program
   PHA
 
   ; writing sprites parameters.
+  CLC
   LDA PPUSTATUS ; draw top left
-  LDA sprite_y
-  STA $0200, x
-  LDA sprite_x
-  STA $0203, x
-  LDA sprite_index
+  LDA player_y
+  STA $0200
+  LDA player_x
+  STA $0203
+  LDA player_sprite_index
   ADC walk_state ; walk_state also corresponds to tile offset
-  STA $0201, x
+  ADC player_dir
+  STA $0201
 
   LDA PPUSTATUS ; draw top right
-  LDA sprite_y
-  STA $0204, x
-  LDA sprite_x
+  LDA player_y
+  STA $0204
+  LDA player_x
   ADC #$08
-  STA $0207, x
-  LDA sprite_index
+  STA $0207
+  LDA player_sprite_index
   ADC #$01
   ADC walk_state
-  STA $0205, x
+  ADC player_dir
+  STA $0205
 
   LDA PPUSTATUS ; draw bottom left
-  LDA sprite_y
+  LDA player_y
   ADC #$08
-  STA $0208, x
-  LDA sprite_x
-  STA $020B, x
-  LDA sprite_index
+  STA $0208
+  LDA player_x
+  STA $020B
+  LDA player_sprite_index
   ADC #$10
   ADC walk_state
-  STA $0209, x
+  ADC player_dir
+  STA $0209
 
   LDA PPUSTATUS ; draw bottom right
-  LDA sprite_y
+  LDA player_y
   ADC #$08
-  STA $020C, x
-  LDA sprite_x
+  STA $020C
+  LDA player_x
   ADC #$08
-  STA $020F, x
-  LDA sprite_index
+  STA $020F
+  LDA player_sprite_index
   ADC #$11
   ADC walk_state
-  STA $020D, x
+  ADC player_dir
+  STA $020D
 
   ;write tile attributes for sprites, using palette 0.
   LDA #$00
-  STA $0202, x
-  STA $0206, x
-  STA $020A, x
-  STA $020E, x
+  STA $0202
+  STA $0206
+  STA $020A
+  STA $020E
 
   ; restore registers and return
   PLA

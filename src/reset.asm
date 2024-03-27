@@ -1,7 +1,7 @@
 .include "constants.inc"
 
 .segment "ZEROPAGE"
-.importzp walk_state, walk_count
+.importzp walk_state, walk_count, player_y, player_x, player_sprite_index
 
 .segment "CODE"
 .import main
@@ -37,6 +37,12 @@ clear_oam:
   STA walk_state
   LDA #$00
   STA walk_count
+  LDA #$21
+  STA player_y
+  LDA #$6a
+  STA player_x
+  LDA #$01
+  STA player_sprite_index
 
 vblankwait2:
   BIT $2002
